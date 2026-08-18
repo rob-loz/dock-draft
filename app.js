@@ -209,21 +209,38 @@ async function viewSelectedRoster() {
 
 // --- 6. DRAFT ACTION ---
 async function draftPlayer(playerId) {
-  // 1. Immediately disable all draft buttons on the page to prevent spam/double-clicks
+  // 1. Double check who is ACTUALLY on the clock right now before doing anything
+  const { data: currentPick } = await db.from('draft_picks')
+    .select('team_id')
+    .is('player_id', null)
+    .order('pick_number', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (!currentPick || currentPick.team_id !== currentTeamId) {
+    alert("Nice try! It is not your turn to draft.");
+    location.reload();
+    return;
+  }
+
+  // 2. Immediately disable all draft buttons on the page to prevent spam/double-clicks
   const draftButtons = document.querySelectorAll('.btn-draft');
   draftButtons.forEach(btn => {
     btn.disabled = true;
     btn.innerText = 'Drafting...';
   });
 
-  // 2. Call the secure Postgres function (execute_draft_pick)
-  // This function validates that it is truly your turn and locks the database row
+  console.log("Attempting draft -> Team ID:", currentTeamId, "Player ID:", playerId);
+
+  // 3. Call the secure Postgres function (execute_draft_pick)
   const { data, error } = await db.rpc('execute_draft_pick', {
     p_team_id: currentTeamId,
     p_player_id: playerId
   });
 
-  // 3. Handle the response
+  console.log("Supabase RPC Response:", { data, error });
+
+  // 4. Handle the response
   if (error || (data && !data.success)) {
     alert(error ? error.message : (data ? data.message : "Error making pick!"));
     location.reload(); // Refresh to sync UI back to reality
