@@ -74,7 +74,7 @@ function canDraftPlayer(newPosition) {
 
 // --- 5. RENDER THE UI ---
 async function loadAvailablePlayers() {
-  const { data } = await db.from('players').select('*').eq('is_drafted', false).order('auto_draft_rank', { ascending: true }).limit(50);
+  const { data } = await db.from('players').select('*').eq('is_drafted', false).order('auto_draft_rank', { ascending: true });
   const list = document.getElementById('players-list');
   list.innerHTML = '';
   
