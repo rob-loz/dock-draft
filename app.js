@@ -74,15 +74,27 @@ function canDraftPlayer(newPosition) {
 
 // --- 5. RENDER THE UI ---
 async function loadAvailablePlayers() {
+  // 1. First, find out who is actually on the clock right now
+  const { data: currentPick } = await db.from('draft_picks')
+    .select('team_id')
+    .is('player_id', null)
+    .order('pick_number', { ascending: true })
+    .limit(1)
+    .single();
+
+  // Check if it is currently *your* turn
+  const isMyTurn = currentPick && currentPick.team_id === currentTeamId;
+
+  // 2. Fetch all undrafted players
   const { data } = await db.from('players').select('*').eq('is_drafted', false).order('auto_draft_rank', { ascending: true });
   const list = document.getElementById('players-list');
   list.innerHTML = '';
   
   if (data) {
     data.forEach(player => {
-      const isAllowed = canDraftPlayer(player.position);
-      const buttonClass = isAllowed ? 'btn-draft' : 'btn-draft btn-disabled';
-      const buttonAction = isAllowed ? `onclick="draftPlayer('${player.id}')"` : 'disabled';
+      // If it's NOT your turn, force the button to be disabled and grayed out!
+      const buttonClass = isMyTurn ? 'btn-draft' : 'btn-draft btn-disabled';
+      const buttonAction = isMyTurn ? `onclick="draftPlayer('${player.id}')"` : 'disabled';
       
       const li = document.createElement('li');
       li.innerHTML = `
@@ -90,7 +102,7 @@ async function loadAvailablePlayers() {
           <span class="player-name">${player.name}</span>
           <span class="player-meta"><span class="badge ${player.position.trim()}">${player.position}</span> ${player.nfl_team}</span>
         </div>
-        <button class="${buttonClass}" ${buttonAction}>${isAllowed ? 'Draft' : 'Full'}</button>
+        <button class="${buttonClass}" ${buttonAction}>${isMyTurn ? 'Draft' : 'Not Your Turn'}</button>
       `;
       list.appendChild(li);
     });
