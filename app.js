@@ -197,39 +197,28 @@ async function viewSelectedRoster() {
 
 // --- 6. DRAFT ACTION ---
 async function draftPlayer(playerId) {
-  // 1. Instantly disable all draft buttons on the page to prevent double-clicking
+  // 1. Immediately disable all draft buttons on the page to prevent spam/double-clicks
   const draftButtons = document.querySelectorAll('.btn-draft');
   draftButtons.forEach(btn => {
     btn.disabled = true;
     btn.innerText = 'Drafting...';
   });
 
-  // 2. Find current pick on the clock for this team
-  const { data: pickData } = await db.from('draft_picks')
-    .select('pick_number')
-    .eq('team_id', currentTeamId)
-    .is('player_id', null)
-    .order('pick_number', { ascending: true })
-    .limit(1)
-    .single();
+  // 2. Call the secure Postgres function (execute_draft_pick)
+  // This function validates that it is truly your turn and locks the database row
+  const { data, error } = await db.rpc('execute_draft_pick', {
+    p_team_id: currentTeamId,
+    p_player_id: playerId
+  });
 
-  if (!pickData) {
-    alert("It is not your turn!");
-    location.reload(); // Refresh to sync UI
+  // 3. Handle the response
+  if (error || (data && !data.success)) {
+    alert(error ? error.message : (data ? data.message : "Error making pick!"));
+    location.reload(); // Refresh to sync UI back to reality
     return;
   }
 
-  // 3. Mark player as drafted
-  await db.from('players').update({ is_drafted: true }).eq('id', playerId);
-
-  // 4. Update the draft board
-  await db
-    .from('draft_picks')
-    .update({ 
-      player_id: playerId, 
-      picked_at: new Date().toISOString() 
-    })
-    .eq('pick_number', pickData.pick_number);
+  // Success! The real-time listener will automatically update the UI for everyone.
 }
 
 // --- 7. REALTIME UPDATES & AI INSULTS ---
