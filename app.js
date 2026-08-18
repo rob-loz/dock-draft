@@ -197,10 +197,39 @@ async function viewSelectedRoster() {
 
 // --- 6. DRAFT ACTION ---
 async function draftPlayer(playerId) {
-  const { data: pickData } = await db.from('draft_picks').select('pick_number').eq('team_id', currentTeamId).is('player_id', null).order('pick_number', { ascending: true }).limit(1).single();
-  if (!pickData) { alert("It is not your turn!"); return; }
+  // 1. Instantly disable all draft buttons on the page to prevent double-clicking
+  const draftButtons = document.querySelectorAll('.btn-draft');
+  draftButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.innerText = 'Drafting...';
+  });
+
+  // 2. Find current pick on the clock for this team
+  const { data: pickData } = await db.from('draft_picks')
+    .select('pick_number')
+    .eq('team_id', currentTeamId)
+    .is('player_id', null)
+    .order('pick_number', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (!pickData) {
+    alert("It is not your turn!");
+    location.reload(); // Refresh to sync UI
+    return;
+  }
+
+  // 3. Mark player as drafted
   await db.from('players').update({ is_drafted: true }).eq('id', playerId);
-  await db.from('draft_picks').update({ player_id: playerId, picked_at: new Date().toISOString() }).eq('pick_number', pickData.pick_number);
+
+  // 4. Update the draft board
+  await db
+    .from('draft_picks')
+    .update({ 
+      player_id: playerId, 
+      picked_at: new Date().toISOString() 
+    })
+    .eq('pick_number', pickData.pick_number);
 }
 
 // --- 7. REALTIME UPDATES & AI INSULTS ---
