@@ -22,6 +22,15 @@ async function loadTeams() {
       option.innerText = team.team_name;
       select.appendChild(option);
     });
+
+    // FEATURE: Restore previously selected dropdown value
+    const savedDropdownTeam = localStorage.getItem('selectedTeamDropdown');
+    if (savedDropdownTeam) select.value = savedDropdownTeam;
+
+    // FEATURE: Save selection when the user changes it
+    select.addEventListener('change', (e) => {
+      localStorage.setItem('selectedTeamDropdown', e.target.value);
+    });
   }
 }
 loadTeams();
@@ -35,8 +44,27 @@ async function login() {
     .from('teams').select('id, team_name').eq('team_name', teamName).eq('passcode', pin).single();
 
   if (error || !data) { alert("Incorrect PIN!"); return; }
+
+  // FEATURE: Save credentials so they don't have to log in next time
+  localStorage.setItem('dockDraftTeamId', data.id);
+  localStorage.setItem('dockDraftTeamName', data.team_name);
+  localStorage.setItem('selectedTeamDropdown', data.team_name);
+
   startDraftApp(data);
 }
+
+// FEATURE: Auto-login check on page load
+function checkAutoLogin() {
+  const storedTeamId = localStorage.getItem('dockDraftTeamId');
+  const storedTeamName = localStorage.getItem('dockDraftTeamName');
+  
+  if (storedTeamId && storedTeamName) {
+    // Skip the login screen and jump straight into the draft room!
+    startDraftApp({ id: storedTeamId, team_name: storedTeamName });
+  }
+}
+// Run this immediately when the script loads
+checkAutoLogin();
 
 async function startDraftApp(teamData) {
   currentTeamId = teamData.id;
@@ -146,9 +174,12 @@ async function loadDraftBoard() {
         if (!onTheClockFound) {
           document.getElementById('current-pick-team').innerText = `ON THE CLOCK: ${pick.teams.team_name}`;
           onTheClockFound = true;
-          
-          // Now that we found the team on the clock, start the timer using the lastPickTime!
           startTimer(lastPickTime); 
+          
+          // FEATURE: Auto-scroll the board to this exact pick
+          setTimeout(() => {
+            li.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 200); // 200ms delay ensures the DOM is fully drawn before scrolling
         }
       }
       list.appendChild(li);
