@@ -215,10 +215,12 @@ async function viewSelectedRoster() {
   const selectedTeamId = document.getElementById('roster-select').value;
   const list = document.getElementById('roster-list');
   
+  // ADDED: .order('pick_number', { ascending: true }) to sort by draft order
   const { data } = await db.from('draft_picks')
-    .select('players(name, position, nfl_team)')
+    .select('pick_number, players(name, position, nfl_team)')
     .eq('team_id', selectedTeamId)
-    .not('player_id', 'is', null);
+    .not('player_id', 'is', null)
+    .order('pick_number', { ascending: true });
     
   list.innerHTML = '';
   
@@ -229,7 +231,10 @@ async function viewSelectedRoster() {
       li.innerHTML = `
         <div class="player-info">
           <span class="player-name">${p.name}</span>
-          <span class="player-meta"><span class="badge ${p.position.trim()}">${p.position}</span> ${p.nfl_team}</span>
+          <span class="player-meta">
+            <span class="badge ${p.position.trim()}">${p.position}</span> ${p.nfl_team}
+            <span style="margin-left: 8px; color: var(--text-muted); font-size: 11px;">(Pick ${pick.pick_number})</span>
+          </span>
         </div>`;
       list.appendChild(li);
     });
