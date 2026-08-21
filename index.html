@@ -6,7 +6,6 @@
   <title>Dock Draft</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <!-- Import Supabase via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -66,7 +65,11 @@
     /* 3-Column Grid Layout */
     .draft-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
     
-    h3 { font-size: 18px; margin-bottom: 15px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    /* NEW: Uniform Column Header to keep lists perfectly aligned */
+    .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; min-height: 34px; }
+    .column-header h3 { margin-bottom: 0; }
+    
+    h3 { font-size: 18px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
     ul { list-style: none; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow-y: auto; max-height: 70vh; padding: 10px; }
     ul::-webkit-scrollbar { width: 8px; }
     ul::-webkit-scrollbar-track { background: transparent; }
@@ -88,12 +91,12 @@
     
     /* Position Colors */
     .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-right: 6px; }
-    .badge.QB { background: #ef4444; color: white; } /* Red */
-    .badge.RB { background: #3b82f6; color: white; } /* Blue */
-    .badge.WR { background: #10b981; color: white; } /* Green */
-    .badge.TE { background: #f59e0b; color: white; } /* Orange */
-    .badge.K { background: #8b5cf6; color: white; }  /* Purple */
-    .badge.DEF { background: #64748b; color: white; } /* Slate */
+    .badge.QB { background: #ef4444; color: white; }
+    .badge.RB { background: #3b82f6; color: white; }
+    .badge.WR { background: #10b981; color: white; }
+    .badge.TE { background: #f59e0b; color: white; }
+    .badge.K { background: #8b5cf6; color: white; }
+    .badge.DEF { background: #64748b; color: white; }
 
     .btn-draft { width: auto; padding: 8px 16px; font-size: 14px; }
     .btn-disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
@@ -114,7 +117,7 @@
   <!-- LOGIN SCREEN -->
   <div id="login-screen">
     <div class="login-card">
-      <h1>Dock Draft 2026</h1><br>
+      <h2>War Room Access</h2>
       <select id="team-select"><option value="">Loading teams...</option></select>
       <input type="password" id="pin-input" placeholder="Enter 4-Digit PIN" maxlength="4">
       <button onclick="login()">Enter Draft</button>
@@ -129,10 +132,18 @@
     <div class="header">
       <h2 id="main-title">Its draft time dickheads</h2>
       
-      <!-- New On The Clock Banner -->
-      <div class="active-pick-container">
-        <span class="active-team-text" id="current-pick-team">Loading...</span>
-        <div class="timer" id="clock-display">24:00:00</div> 
+      <!-- Right Side Controls -->
+      <div style="display: flex; gap: 15px; align-items: center;">
+        
+        <!-- On The Clock Banner -->
+        <div class="active-pick-container">
+          <span class="active-team-text" id="current-pick-team">Loading...</span>
+          <div class="timer" id="clock-display">24:00:00</div> 
+        </div>
+
+        <!-- Log Out Button -->
+        <button onclick="logout()" style="width: auto; padding: 10px 16px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 14px;">Log Out</button>
+
       </div>
     </div>
 
@@ -140,21 +151,25 @@
       
       <!-- Column 1: Available Players -->
       <div id="available-players">
-        <h3>Available Players</h3>
+        <div class="column-header">
+          <h3>Available Players</h3>
+        </div>
         <ul id="players-list"></ul>
       </div>
 
       <!-- Column 2: The Draft Board -->
       <div id="draft-board">
-        <h3>Live Draft Board</h3>
+        <div class="column-header">
+          <h3>Live Draft Board</h3>
+        </div>
         <ul id="board-list"></ul>
       </div>
 
       <!-- Column 3: Team Rosters -->
       <div id="team-rosters">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h3 style="margin-bottom: 0;">Rosters</h3>
-          <select id="roster-select" onchange="viewSelectedRoster()" style="width: 160px; padding: 6px; margin-bottom: 0; font-size: 14px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px;"></select>
+        <div class="column-header">
+          <h3>Rosters</h3>
+          <select id="roster-select" onchange="viewSelectedRoster()" style="width: 160px; padding: 6px; font-size: 14px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px;"></select>
         </div>
         <ul id="roster-list"></ul>
       </div>
